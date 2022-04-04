@@ -43,14 +43,14 @@ def get_radius(P):
 	return rad
 	
 def clean(P):
-	fil_out = SphereParams(P.xc, P.yc, P.zc, P.radius)
+	fil_out = SphereParams(-0.037, -0.017, 0.47, 0.055)#initial guess
 	if not First:
 		fil_out.xc = lastP.xc
 		fil_out.yc = lastP.yc
 		fil_out.zc = lastP.zc
 		fil_out.radius = lastP.radius
 	#fil_outxyz = 4
-	fil_gain = 0.01
+	fil_gain = 0.02
 	filr = P.radius
 	# start with radius
 	fil_out.radius = fil_gain*filr + (1-fil_gain)*fil_out.radius
@@ -84,4 +84,7 @@ if __name__ == '__main__':
 			global lastP
 			lastP = SphereParams(filtered_param.xc, filtered_param.yc, filtered_param.zc, filtered_param.radius)
 			first = False
+		if not first and msg_received:
+			lastP = SphereParams(filtered_param.xc, filtered_param.yc, filtered_param.zc, filtered_param.radius)
 		rate.sleep()
+
