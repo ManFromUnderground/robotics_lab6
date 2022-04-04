@@ -42,22 +42,16 @@ def get_radius(P):
 	rad = np.sqrt(P[0][3] + P[0][0]**2 + P[0][1]**2 + P[0][2]**2)
 	return rad
 	
-def clean(P):
-	fil_out = SphereParams(-0.037, -0.017, 0.47, 0.055)#initial guess
-	if not First:
-		fil_out.xc = lastP.xc
-		fil_out.yc = lastP.yc
-		fil_out.zc = lastP.zc
-		fil_out.radius = lastP.radius
-	#fil_outxyz = 4
-	fil_gain = 0.02
-	filr = P.radius
-	# start with radius
-	fil_out.radius = fil_gain*filr + (1-fil_gain)*fil_out.radius
-	P.radius = fil_out.radius
-	P.xc = fil_gain*P.xc + (1-fil_gain)*fil_out.xc
-	P.yc = fil_gain*P.yc + (1-fil_gain)*fil_out.yc
-	P.zc = fil_gain*P.zc + (1-fil_gain)*fil_out.zc
+def clean(P, last=None):
+	if last == None:
+		return P
+	fil_gain = 0.022
+	rgain = 0.02
+	zgain = 0.016
+	P.radius = rgain*P.radius + (1-rgain)*last.radius
+	P.xc = fil_gain*P.xc + (1-fil_gain)*last.xc
+	P.yc = fil_gain*P.yc + (1-fil_gain)*last.yc
+	P.zc = zgain*P.zc + (1-zgain)*last.zc
 	return P
 	
 
@@ -77,14 +71,11 @@ if __name__ == '__main__':
 			P = fit(point_arr)
 			rad = get_radius(P)
 			param = SphereParams(float(P[0][0]), float(P[0][1]), float(P[0][2]), rad)
-			filtered_param = clean(param)
+			if not first:
+				filtered_param = clean(param, filtered_param)
+			if first:
+				filtered_param = clean(param)
+				first = False
 			#filter gains differently for each parameter
 			pub.publish(filtered_param)
-		if first and msg_received:
-			global lastP
-			lastP = SphereParams(filtered_param.xc, filtered_param.yc, filtered_param.zc, filtered_param.radius)
-			first = False
-		if not first and msg_received:
-			lastP = SphereParams(filtered_param.xc, filtered_param.yc, filtered_param.zc, filtered_param.radius)
 		rate.sleep()
-
