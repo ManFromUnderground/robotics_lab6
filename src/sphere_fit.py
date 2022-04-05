@@ -41,16 +41,22 @@ def get_radius(P):
 	#uses xc, yc, and zc to get rad with the radius formula
 	rad = np.sqrt(P[0][3] + P[0][0]**2 + P[0][1]**2 + P[0][2]**2)
 	return rad
-	
+
+
 def clean(P, last=None):
+	#returns the first value recieved parameter to be used as the first "last" value on 2nd run through
 	if last == None:
 		return P
+	#sets how much of each to include for radius, z, and x/y
 	fil_gain = 0.022
 	rgain = 0.02
 	zgain = 0.016
+	#filters radius
 	P.radius = rgain*P.radius + (1-rgain)*last.radius
+	#filters x & y for position
 	P.xc = fil_gain*P.xc + (1-fil_gain)*last.xc
 	P.yc = fil_gain*P.yc + (1-fil_gain)*last.yc
+	#z was more problematic, so its position is filtered seperately
 	P.zc = zgain*P.zc + (1-zgain)*last.zc
 	return P
 	
@@ -61,7 +67,7 @@ if __name__ == '__main__':
 	sub = rospy.Subscriber('xyz_cropped_ball', XYZarray, get_msg)
 	pub = rospy.Publisher("/sphere_params", SphereParams, queue_size=1)
 	rate = rospy.Rate(10)
-	
+	#global variable used for telling if it is the first run through
 	global first
 	first = True
 	
@@ -71,11 +77,11 @@ if __name__ == '__main__':
 			P = fit(point_arr)
 			rad = get_radius(P)
 			param = SphereParams(float(P[0][0]), float(P[0][1]), float(P[0][2]), rad)
+			#cleans the calculated sphere parameters using clean function
 			if not first:
 				filtered_param = clean(param, filtered_param)
 			if first:
 				filtered_param = clean(param)
 				first = False
-			#filter gains differently for each parameter
 			pub.publish(filtered_param)
 		rate.sleep()
