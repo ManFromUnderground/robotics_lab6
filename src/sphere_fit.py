@@ -80,8 +80,8 @@ if __name__ == '__main__':
 			#cleans the calculated sphere parameters using clean function
 			if not first:
 				filtered_param = clean(param, filtered_param)
+				pub.publish(filtered_param)
 			if first:
 				filtered_param = clean(param)
 				first = False
-			pub.publish(filtered_param)
 		rate.sleep()
